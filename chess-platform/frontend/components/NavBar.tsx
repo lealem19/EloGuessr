@@ -4,13 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { href: "/", label: "Analyze" },
   { href: "/daily", label: "Daily" },
-  { href: "/eloguessr", label: "Match" },
+  { href: "/match", label: "Match" },
+  { href: "/analyze", label: "Analyze" },
 ] as const;
 
 function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -21,8 +20,8 @@ export function NavBar() {
     <header className="sticky top-0 z-10 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="text-xl leading-none">♞</span>
-          <span>Chess Lab</span>
+          <span className="text-xl leading-none">♟️</span>
+          <span>EloGuessr</span>
         </Link>
 
         <nav className="flex gap-1 bg-zinc-100 dark:bg-zinc-900 rounded-full p-1">

@@ -9,7 +9,7 @@ import { MoveControls } from "@/components/MoveControls";
 import { EloSlider } from "@/components/EloSlider";
 
 const DEFAULT_GUESS = 1200;
-const STORAGE_PREFIX = "chesslab-daily-";
+const STORAGE_PREFIX = "eloguessr-daily-";
 
 type SavedResult = {
   whiteGuess: number;
@@ -115,7 +115,7 @@ export default function DailyPage() {
 
   function handleCopy() {
     if (!round || !result) return;
-    const text = `Chess Lab Daily · ${round.date}\nScore: ${result.score} / 1000`;
+    const text = `EloGuessr Daily · ${round.date}\nScore: ${result.score} / 1000`;
     navigator.clipboard?.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -210,7 +210,7 @@ export default function DailyPage() {
                   {copied ? "Copied!" : "Copy result"}
                 </button>
                 <Link
-                  href="/eloguessr"
+                  href="/match"
                   className="rounded-full bg-foreground text-background px-5 py-2 font-medium text-sm"
                 >
                   Play a 5-round match →

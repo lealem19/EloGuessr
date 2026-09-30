@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Chess Analysis Platform",
-  description: "Stockfish-powered game analysis and EloGuessr",
+  title: "EloGuessr",
+  description: "Guess a chess player's rating from their moves alone, plus full Stockfish game analysis",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

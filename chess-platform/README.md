@@ -1,11 +1,15 @@
-# Chess Analysis Platform
+# EloGuessr
 
-A full-stack chess analysis platform: paste a PGN (or a Lichess game URL), get
-a Stockfish-backed move-by-move breakdown (eval graph, blunder/mistake/
-inaccuracy classification, best-move suggestions), or play **EloGuessr** — a
-GeoGuessr-style 5-round match where you play/pause through a real game and
-guess both players' ratings from their moves alone, with a running score and
-an end-of-match recap.
+A GeoGuessr-style game for chess ratings: watch a real rated game play out
+move by move, no names or numbers attached, and guess both players' Elo.
+**Daily** is one pinned game a day, same for everyone; **Match** is five
+rounds with a running score and an end-of-match recap.
+
+Underneath it, every game — whether played through EloGuessr or submitted
+directly — gets a full Stockfish breakdown (eval graph, blunder/mistake/
+inaccuracy classification, best-move suggestions) via the **Analyze** tab:
+paste a PGN or a Lichess game URL. That analysis pipeline is what powers
+EloGuessr itself, not a separate feature bolted on afterward.
 
 Analysis is distributed across a Redis-backed RQ job queue and parallel
 Stockfish workers, backed by a Postgres position cache keyed on Zobrist
@@ -92,7 +96,8 @@ chess-platform/
     scripts/         bulk import + benchmark
     tests/          pytest (cp_loss / classify / Zobrist signing)
   frontend/   Next.js (App Router) + TypeScript
-    app/            home, /games/[id] analyzer, /eloguessr
+    app/            / (landing), /daily, /match, /analyze, /games/[id]
+    components/     shared EloGuessr UI (slider, move controls, nav)
     lib/            typed API client
   docker-compose.yml   Postgres + Redis only — everything else runs locally
 ```
@@ -140,8 +145,8 @@ echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
 npm run dev        # http://localhost:3000
 ```
 
-**5. Bulk import** (optional — populates real games for the analyzer and
-EloGuessr; also what the benchmark numbers above were measured against)
+**5. Bulk import** (optional — populates real games for Daily/Match and the
+analyzer; also what the benchmark numbers above were measured against)
 
 ```bash
 cd backend/data

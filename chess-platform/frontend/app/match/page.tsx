@@ -182,7 +182,7 @@ export default function EloGuessrPage() {
         <div className="flex flex-col items-center">
           <div className="w-full max-w-[420px]">
             <Chessboard
-              options={{ id: "eloguessr-board", position: currentFen, allowDragging: false }}
+              options={{ id: "match-board", position: currentFen, allowDragging: false }}
             />
           </div>
 
