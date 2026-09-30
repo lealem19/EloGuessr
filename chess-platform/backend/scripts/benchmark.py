@@ -118,15 +118,17 @@ def cache_benchmark(sample: int, depth: int):
 
 
 def start_workers(n: int, log_prefix: str):
-    env = {**os.environ, "OBJC_DISABLE_INITIALIZE_FORK_SAFETY": "YES", "PYTHONPATH": "."}
+    env = {**os.environ, "PYTHONPATH": "."}
     procs = []
     for i in range(n):
         log = open(f"{log_prefix}_{i}.log", "w")
         p = subprocess.Popen(
             # --burst: process whatever's on the queue, then exit. That exit
             # is the completion signal, so timing doesn't depend on polling
-            # individual job objects.
-            [sys.executable, "-m", "rq.cli", "worker", "--burst", "analysis",
+            # individual job objects. SimpleWorker avoids RQ's default
+            # fork-per-job model, which crashes on macOS.
+            [sys.executable, "-m", "rq.cli", "worker",
+             "--worker-class", "rq.worker.SimpleWorker", "--burst", "analysis",
              "--url", os.environ.get("REDIS_URL", "redis://localhost:6379/0")],
             env=env, stdout=log, stderr=subprocess.STDOUT,
         )

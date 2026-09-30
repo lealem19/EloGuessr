@@ -85,16 +85,23 @@ export default function GamePage() {
           {game.white_elo ? ` (${game.white_elo})` : ""} vs {game.black}
           {game.black_elo ? ` (${game.black_elo})` : ""}
         </h1>
-        <p className="text-zinc-500 mb-6">
-          Result: {game.result ?? "?"} ·{" "}
-          {game.status === "queued" ? (
-            <span className="text-amber-600">analyzing…</span>
-          ) : game.status === "error" ? (
-            <span className="text-red-600">analysis error</span>
-          ) : (
-            <span className="text-green-600">analysis complete</span>
+        <div className="mb-6">
+          <p className="text-zinc-500">
+            Result: {game.result ?? "?"} ·{" "}
+            {game.status === "queued" ? (
+              <span className="text-amber-600">analyzing…</span>
+            ) : game.status === "error" ? (
+              <span className="text-red-600">analysis error</span>
+            ) : (
+              <span className="text-green-600">analysis complete</span>
+            )}
+          </p>
+          {game.status === "done" && (game.white_elo == null || game.black_elo == null) && (
+            <p className="text-zinc-400 text-sm mt-1">
+              No ratings on this game, so it won&apos;t appear in Guess the Elo.
+            </p>
           )}
-        </p>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr_260px] gap-6 items-start">
           <div>

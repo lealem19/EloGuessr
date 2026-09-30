@@ -26,6 +26,10 @@ class Game(Base):
     result = Column(String)
     pgn = Column(Text, nullable=False)
     status = Column(String, nullable=False, default="queued")  # queued | done | error
+    # Lichess game id, set only for games imported via /games/import-url.
+    # Nullable + unique -- lets us dedup repeat URL imports while leaving
+    # manually-pasted PGNs (external_id=NULL) unconstrained.
+    external_id = Column(String, unique=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     moves = relationship(

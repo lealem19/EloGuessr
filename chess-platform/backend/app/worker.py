@@ -24,6 +24,22 @@ def get_engine() -> chess.engine.SimpleEngine:
     return _engine
 
 
+def reset_engine() -> None:
+    """Drop the cached engine handle so the next job respawns a fresh one.
+
+    Without this, a Stockfish process that dies mid-job (OOM, crash) leaves
+    every subsequent job on this worker failing against the same dead
+    handle until the worker itself is restarted.
+    """
+    global _engine
+    if _engine is not None:
+        try:
+            _engine.quit()
+        except Exception:
+            pass
+    _engine = None
+
+
 def analyze_game(game_id: int, depth: int = DEFAULT_DEPTH) -> dict:
     db = SessionLocal()
     eng = get_engine()
@@ -78,8 +94,10 @@ def analyze_game(game_id: int, depth: int = DEFAULT_DEPTH) -> dict:
 
         game_row.status = "done"
         db.commit()
-    except Exception:
+    except Exception as e:
         db.rollback()
+        if isinstance(e, (chess.engine.EngineTerminatedError, BrokenPipeError)):
+            reset_engine()
         game_row = db.query(Game).filter(Game.id == game_id).first()
         if game_row:
             game_row.status = "error"

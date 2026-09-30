@@ -1,9 +1,11 @@
 # Chess Analysis Platform
 
-A full-stack chess analysis platform: paste a PGN, get a Stockfish-backed
-move-by-move breakdown (eval graph, blunder/mistake/inaccuracy classification,
-best-move suggestions), or play **Guess the Elo** — watch a real game unfold
-and guess both players' ratings from their moves alone.
+A full-stack chess analysis platform: paste a PGN (or a Lichess game URL), get
+a Stockfish-backed move-by-move breakdown (eval graph, blunder/mistake/
+inaccuracy classification, best-move suggestions), or play **EloGuessr** — a
+GeoGuessr-style 5-round match where you play/pause through a real game and
+guess both players' ratings from their moves alone, with a running score and
+an end-of-match recap.
 
 Analysis is distributed across a Redis-backed RQ job queue and parallel
 Stockfish workers, backed by a Postgres position cache keyed on Zobrist
@@ -90,7 +92,7 @@ chess-platform/
     scripts/         bulk import + benchmark
     tests/          pytest (cp_loss / classify / Zobrist signing)
   frontend/   Next.js (App Router) + TypeScript
-    app/            home, /games/[id] analyzer, /guess
+    app/            home, /games/[id] analyzer, /eloguessr
     lib/            typed API client
   docker-compose.yml   Postgres + Redis only — everything else runs locally
 ```
@@ -113,15 +115,21 @@ brew install stockfish         # or: apt install stockfish
 .venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
-**3. Workers** (run each in its own terminal — on macOS you need the fork-safety
-env var below, or RQ's forked work-horses crash on startup)
+**3. Workers** (run each in its own terminal, or background them)
 
 ```bash
 cd backend
-OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES PYTHONPATH=. .venv/bin/rq worker analysis
+PYTHONPATH=. .venv/bin/rq worker --worker-class rq.worker.SimpleWorker analysis
 ```
 
-Run this 4 times (4 terminals, or background them) for 4-way parallelism.
+Run this 4 times for 4-way parallelism. `SimpleWorker` runs jobs in-process
+instead of RQ's default fork-per-job model — RQ's default forking crashes on
+macOS (`Objective-C fork safety`) once any framework has touched the ObjC
+runtime pre-fork, which happens easily via psycopg2/networking libs. The
+trade-off is that a job no longer gets its own OS-level process sandbox, so a
+hard crash inside one job takes down that worker rather than just that job;
+`app/worker.py` guards the common case (a dead Stockfish process) by
+respawning the engine on the next job instead of wedging the worker.
 
 **4. Frontend**
 
@@ -133,7 +141,7 @@ npm run dev        # http://localhost:3000
 ```
 
 **5. Bulk import** (optional — populates real games for the analyzer and
-Guess the Elo; also what the benchmark numbers above were measured against)
+EloGuessr; also what the benchmark numbers above were measured against)
 
 ```bash
 cd backend/data

@@ -1,5 +1,14 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 export type MoveOut = {
   ply: number;
   san: string;
@@ -31,10 +40,20 @@ export type GameOut = {
   black_stats: PlayerStats | null;
 };
 
+export type GameCreated = {
+  id: number;
+  status: string;
+  has_elo: boolean;
+};
+
 export type GuessRandomOut = {
   game_id: number;
   moves: string[];
   result: string | null;
+};
+
+export type GuessDailyOut = GuessRandomOut & {
+  date: string;
 };
 
 export type GuessOut = {
@@ -54,15 +73,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const detail = await res.text();
-    throw new Error(`${res.status} ${res.statusText}: ${detail}`);
+    throw new ApiError(res.status, `${res.status} ${res.statusText}: ${detail}`);
   }
   return res.json();
 }
 
 export function createGame(pgn: string) {
-  return request<{ id: number; status: string }>("/games", {
+  return request<GameCreated>("/games", {
     method: "POST",
     body: JSON.stringify({ pgn }),
+  });
+}
+
+export function importGameFromUrl(url: string) {
+  return request<GameCreated>("/games/import-url", {
+    method: "POST",
+    body: JSON.stringify({ url }),
   });
 }
 
@@ -70,8 +96,13 @@ export function getGame(id: number | string) {
   return request<GameOut>(`/games/${id}`);
 }
 
-export function getRandomGuessGame() {
-  return request<GuessRandomOut>("/guess/random");
+export function getRandomGuessGame(excludeIds: number[] = []) {
+  const qs = excludeIds.length ? `?exclude=${excludeIds.join(",")}` : "";
+  return request<GuessRandomOut>(`/guess/random${qs}`);
+}
+
+export function getDailyGuessGame() {
+  return request<GuessDailyOut>("/guess/daily");
 }
 
 export function submitGuess(gameId: number, whiteGuess: number, blackGuess: number) {
