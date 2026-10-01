@@ -90,16 +90,15 @@ Postgres's signed `BIGINT` range before storage.
 ## Repo layout
 
 ```
-chess-platform/
-  backend/    FastAPI + SQLAlchemy + RQ
-    app/            API, models, analysis core, worker
-    scripts/         bulk import + benchmark
-    tests/          pytest (cp_loss / classify / Zobrist signing)
-  frontend/   Next.js (App Router) + TypeScript
-    app/            / (landing), /daily, /match, /analyze, /games/[id]
-    components/     shared EloGuessr UI (slider, move controls, nav)
-    lib/            typed API client
-  docker-compose.yml   Postgres + Redis only — everything else runs locally
+backend/    FastAPI + SQLAlchemy + RQ
+  app/            API, models, analysis core, worker
+  scripts/         bulk import + benchmark
+  tests/          pytest (cp_loss / classify / Zobrist signing)
+frontend/   Next.js (App Router) + TypeScript
+  app/            / (landing), /daily, /match, /analyze, /games/[id]
+  components/     shared EloGuessr UI (slider, move controls, nav)
+  lib/            typed API client
+docker-compose.yml   Postgres + Redis only — everything else runs locally
 ```
 
 ## How to run
@@ -172,13 +171,29 @@ cd backend && .venv/bin/pytest -q
 ```
 
 `.github/workflows/backend-tests.yml` runs the same suite on every push /
-PR touching `chess-platform/backend/**`.
+PR touching `backend/**`.
 
-## Resume bullet
+## Resume bullets
 
-> Built a full-stack chess analysis platform (Next.js/TypeScript, FastAPI,
-> PostgreSQL, Redis) with a distributed Stockfish job queue; Zobrist-hash
-> position caching made re-analysis of previously-seen games 91x faster
-> (100% cache hit rate) and cut engine calls by 8% even across distinct
-> games via shared openings, while parallel workers delivered a 3.29x
-> throughput gain (1 → 4 workers) on 403 real Lichess games.
+One bullet, if you only get one:
+
+> Built EloGuessr, a full-stack web game (Next.js/TypeScript, FastAPI,
+> PostgreSQL, Redis) where players guess a chess player's rating from their
+> moves alone, backed by a distributed Stockfish analysis pipeline;
+> Zobrist-hash position caching made re-analysis of previously-seen games
+> 91x faster (100% cache hit) and parallel RQ workers delivered a 3.29x
+> throughput gain across 430+ real Lichess games.
+
+Split in two, if the role wants product + infra separated:
+
+> Designed and built EloGuessr, a GeoGuessr-style game for chess ratings
+> (Next.js/TypeScript, FastAPI, PostgreSQL) — a daily challenge and a
+> 5-round match mode, direct Lichess game import, and a percentile-ranking
+> feature computed live from real historical gameplay data stored in
+> Postgres.
+
+> Built the distributed analysis engine underneath it: a Redis-backed RQ
+> job queue with parallel Stockfish workers and a Zobrist-hash position
+> cache, cutting re-analysis time by 91x (100% cache hit rate) and
+> delivering a 3.29x throughput gain across 4 parallel workers on 430+ real
+> Lichess games; 20 automated tests with CI via GitHub Actions.

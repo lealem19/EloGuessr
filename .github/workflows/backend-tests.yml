@@ -3,15 +3,15 @@ name: Backend Tests
 on:
   push:
     paths:
-      - "chess-platform/backend/**"
+      - "backend/**"
       - ".github/workflows/backend-tests.yml"
   pull_request:
     paths:
-      - "chess-platform/backend/**"
+      - "backend/**"
 
 defaults:
   run:
-    working-directory: chess-platform/backend
+    working-directory: backend
 
 jobs:
   pytest:

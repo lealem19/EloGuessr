@@ -1,1 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+node_modules/
+.next/
+out/
+
+backend/data/*.pgn
+backend/data/*.pgn.zst
+backend/data/*.log
+
+.env*
 .DS_Store
