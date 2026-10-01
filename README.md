@@ -23,26 +23,26 @@ depth 12, on this machine — see [How to run](#how-to-run) → Benchmark to rep
 
 **Position cache**
 
-| run | positions | unique (engine calls) | cache hit rate | time |
-|---|---|---|---|---|
-| cross-game reuse, cold cache | 25,892 | 23,820 | 8.0% | 619.9s → 635.1s |
-| re-analysis, warm cache | 25,892 | 0 | 100% | 619.9s → **6.8s** |
+| run                          | positions | unique (engine calls) | cache hit rate | time              |
+| ---------------------------- | --------- | --------------------- | -------------- | ----------------- |
+| cross-game reuse, cold cache | 25,892    | 23,820                | 8.0%           | 619.9s → 635.1s   |
+| re-analysis, warm cache      | 25,892    | 0                     | 100%           | 619.9s → **6.8s** |
 
-Even across 400 *different* games with no shared history, ~8% of positions
+Even across 400 _different_ games with no shared history, ~8% of positions
 are exact transpositions (openings mostly) and skip the engine for free.
 The bigger win shows up on re-analysis: once a game's positions are cached,
 re-running the same analysis is **91x faster** — 0 engine calls, pure cache
-reads. (The cold-cache pass looks marginally *slower* than no-cache at all
+reads. (The cold-cache pass looks marginally _slower_ than no-cache at all
 here — with only 8% overlap, the SELECT/INSERT round-trip per position isn't
 fully paid back yet; the DB overhead only nets positive once reuse climbs,
 which is exactly what the warm-cache row shows.)
 
 **Worker throughput** (15 fresh, never-before-seen games per batch)
 
-| workers | games | time | throughput |
-|---|---|---|---|
-| 1 | 15 | 26.6s | 0.56 games/sec |
-| 4 | 15 | 8.1s | 1.86 games/sec |
+| workers | games | time  | throughput     |
+| ------- | ----- | ----- | -------------- |
+| 1       | 15    | 26.6s | 0.56 games/sec |
+| 4       | 15    | 8.1s  | 1.86 games/sec |
 
 **3.29x** speedup going from 1 to 4 parallel Stockfish workers (of a
 theoretical 4x — the gap is queue/DB overhead shared across workers).
@@ -82,7 +82,7 @@ theoretical 4x — the gap is queue/DB overhead shared across workers).
 Each `rq worker` process owns one long-lived Stockfish process (`Threads=1`)
 reused across every job it picks up, so N worker processes give N-way
 parallelism without paying engine-startup cost per game. Every position
-evaluated (before *and* after each move) is looked up by
+evaluated (before _and_ after each move) is looked up by
 `(zobrist_hash, depth)` in Postgres before falling back to the engine; a
 `python-chess` Zobrist hash is unsigned 64-bit, so it's remapped into
 Postgres's signed `BIGINT` range before storage.
@@ -172,28 +172,3 @@ cd backend && .venv/bin/pytest -q
 
 `.github/workflows/backend-tests.yml` runs the same suite on every push /
 PR touching `backend/**`.
-
-## Resume bullets
-
-One bullet, if you only get one:
-
-> Built EloGuessr, a full-stack web game (Next.js/TypeScript, FastAPI,
-> PostgreSQL, Redis) where players guess a chess player's rating from their
-> moves alone, backed by a distributed Stockfish analysis pipeline;
-> Zobrist-hash position caching made re-analysis of previously-seen games
-> 91x faster (100% cache hit) and parallel RQ workers delivered a 3.29x
-> throughput gain across 430+ real Lichess games.
-
-Split in two, if the role wants product + infra separated:
-
-> Designed and built EloGuessr, a GeoGuessr-style game for chess ratings
-> (Next.js/TypeScript, FastAPI, PostgreSQL) — a daily challenge and a
-> 5-round match mode, direct Lichess game import, and a percentile-ranking
-> feature computed live from real historical gameplay data stored in
-> Postgres.
-
-> Built the distributed analysis engine underneath it: a Redis-backed RQ
-> job queue with parallel Stockfish workers and a Zobrist-hash position
-> cache, cutting re-analysis time by 91x (100% cache hit rate) and
-> delivering a 3.29x throughput gain across 4 parallel workers on 430+ real
-> Lichess games; 20 automated tests with CI via GitHub Actions.
