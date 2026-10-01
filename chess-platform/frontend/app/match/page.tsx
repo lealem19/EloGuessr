@@ -28,7 +28,7 @@ function fensForSans(sans: string[]): string[] {
 
 type Phase = "loading" | "playing" | "revealed" | "match-summary";
 
-export default function EloGuessrPage() {
+export default function MatchPage() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [roundIndex, setRoundIndex] = useState(0);
   const [playedGameIds, setPlayedGameIds] = useState<number[]>([]);
@@ -120,15 +120,15 @@ export default function EloGuessrPage() {
   }
 
   if (phase === "loading" && !round) {
-    return <div className="p-8 text-zinc-500">Loading a game…</div>;
+    return <div className="flex-1 flex items-center justify-center text-zinc-500">Loading a game…</div>;
   }
   if (error && !round) {
     return (
-      <div className="p-8 flex flex-col gap-3 items-start">
+      <div className="flex-1 flex flex-col items-center justify-center gap-3">
         <p className="text-red-600">{error}</p>
         <button
           onClick={() => loadRound([])}
-          className="rounded-full bg-foreground text-background px-5 py-2 font-medium text-sm"
+          className="border border-zinc-900 dark:border-zinc-100 px-5 py-2 text-sm"
         >
           Try again
         </button>
@@ -138,9 +138,9 @@ export default function EloGuessrPage() {
 
   if (phase === "match-summary") {
     return (
-      <div className="flex flex-1 flex-col items-center bg-zinc-50 dark:bg-black px-4 py-8">
-        <div className="w-full max-w-2xl">
-          <h1 className="text-2xl font-semibold mb-6">EloGuessr</h1>
+      <div className="flex-1 flex items-center justify-center px-4 py-6">
+        <div className="w-full max-w-md">
+          <h1 className="text-lg font-normal mb-4 text-center">Match complete</h1>
           <MatchSummary results={results} onPlayAgain={handlePlayAgain} />
         </div>
       </div>
@@ -155,112 +155,96 @@ export default function EloGuessrPage() {
     .reduce((s, r) => s + r.score, 0);
 
   return (
-    <div className="flex flex-1 flex-col items-center bg-zinc-50 dark:bg-black px-4 py-8">
-      <div className="w-full max-w-2xl">
-        <div className="flex items-center justify-between mb-1">
-          <h1 className="text-2xl font-semibold">EloGuessr</h1>
-          <div className="flex gap-1" aria-label={`Round ${roundIndex + 1} of ${TOTAL_ROUNDS}`}>
-            {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
-              <span
-                key={i}
-                className={`w-2.5 h-2.5 rounded-full ${
-                  i < roundIndex
-                    ? "bg-green-500"
-                    : i === roundIndex
-                      ? "bg-foreground"
-                      : "bg-zinc-300 dark:bg-zinc-700"
-                }`}
-              />
-            ))}
+    <div className="flex-1 flex items-center justify-center px-4 py-6 overflow-hidden">
+      <div className="w-full max-w-4xl">
+        <div className="flex items-baseline justify-between mb-4">
+          <h1 className="text-lg font-normal">Match</h1>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-zinc-400">
+              Round {roundIndex + 1} / {TOTAL_ROUNDS}
+            </span>
+            <div className="flex gap-1" aria-label={`Round ${roundIndex + 1} of ${TOTAL_ROUNDS}`}>
+              {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
+                <span
+                  key={i}
+                  className={`w-1.5 h-1.5 ${
+                    i < roundIndex
+                      ? "bg-zinc-900 dark:bg-zinc-100"
+                      : i === roundIndex
+                        ? "bg-zinc-400"
+                        : "bg-zinc-200 dark:bg-zinc-800"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
-        <p className="text-zinc-500 mb-6">
-          Round {roundIndex + 1} of {TOTAL_ROUNDS} · Step through the game, then guess each
-          player&apos;s rating.
-        </p>
 
-        <div className="flex flex-col items-center">
-          <div className="w-full max-w-[420px]">
+        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-8 items-start">
+          <div>
             <Chessboard
               options={{ id: "match-board", position: currentFen, allowDragging: false }}
             />
-          </div>
-
-          <MoveControls
-            ply={ply}
-            maxPly={fens.length - 1}
-            onChange={setPly}
-            active={phase === "playing"}
-          />
-
-          <p className="text-zinc-400 text-sm mt-2">
-            Ply {ply} / {fens.length - 1} · Result: {round.result ?? "?"}
-          </p>
-        </div>
-
-        {phase === "loading" &&
-          (error ? (
-            <div className="mt-8 flex flex-col items-center gap-3">
-              <p className="text-red-600 text-sm">{error}</p>
-              <button
-                onClick={() => loadRound(playedGameIds)}
-                className="rounded-full bg-foreground text-background px-5 py-2 font-medium text-sm"
-              >
-                Try again
-              </button>
-            </div>
-          ) : (
-            <p className="mt-8 text-zinc-500 text-center">Loading next round…</p>
-          ))}
-
-        {phase === "playing" && (
-          <div className="mt-8 flex flex-col gap-6">
-            <EloSlider label="White's Elo" value={whiteGuess} onChange={setWhiteGuess} />
-            <EloSlider label="Black's Elo" value={blackGuess} onChange={setBlackGuess} />
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="self-center rounded-full bg-foreground text-background px-6 py-2.5 font-medium disabled:opacity-50"
-            >
-              {submitting ? "Scoring…" : "Submit guess"}
-            </button>
-          </div>
-        )}
-
-        {phase === "revealed" && reveal && (
-          <>
-            <div className="mt-8 flex flex-col gap-6">
-              <EloSlider
-                label="White's Elo"
-                value={whiteGuess}
-                onChange={setWhiteGuess}
-                disabled
-                revealedActual={reveal.white_actual}
-              />
-              <EloSlider
-                label="Black's Elo"
-                value={blackGuess}
-                onChange={setBlackGuess}
-                disabled
-                revealedActual={reveal.black_actual}
-              />
-            </div>
-            <RoundSummary
-              roundScore={reveal.score}
-              roundIndex={roundIndex}
-              totalRounds={TOTAL_ROUNDS}
-              runningTotal={runningTotalBeforeThisRound}
-              whiteActual={reveal.white_actual}
-              blackActual={reveal.black_actual}
-              whiteGuess={whiteGuess}
-              blackGuess={blackGuess}
-              whiteStats={reveal.white_stats}
-              blackStats={reveal.black_stats}
-              onNext={handleNextRound}
+            <MoveControls
+              ply={ply}
+              maxPly={fens.length - 1}
+              onChange={setPly}
+              active={phase === "playing"}
             />
-          </>
-        )}
+            <p className="text-zinc-400 text-xs mt-2">
+              Ply {ply} / {fens.length - 1} · Result: {round.result ?? "?"}
+            </p>
+          </div>
+
+          <div>
+            {phase === "loading" &&
+              (error ? (
+                <div className="flex flex-col items-start gap-3">
+                  <p className="text-red-600 text-sm">{error}</p>
+                  <button
+                    onClick={() => loadRound(playedGameIds)}
+                    className="border border-zinc-900 dark:border-zinc-100 px-4 py-2 text-sm"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : (
+                <p className="text-zinc-500">Loading next round…</p>
+              ))}
+
+            {phase === "playing" && (
+              <div className="flex flex-col gap-5">
+                <EloSlider label="White's Elo" value={whiteGuess} onChange={setWhiteGuess} />
+                <EloSlider label="Black's Elo" value={blackGuess} onChange={setBlackGuess} />
+                {error && <p className="text-red-600 text-sm">{error}</p>}
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="border border-zinc-900 dark:border-zinc-100 px-6 py-2.5 disabled:opacity-50"
+                >
+                  {submitting ? "Scoring…" : "Submit guess"}
+                </button>
+              </div>
+            )}
+
+            {phase === "revealed" && reveal && (
+              <RoundSummary
+                roundScore={reveal.score}
+                percentile={reveal.percentile}
+                roundIndex={roundIndex}
+                totalRounds={TOTAL_ROUNDS}
+                runningTotal={runningTotalBeforeThisRound}
+                whiteActual={reveal.white_actual}
+                blackActual={reveal.black_actual}
+                whiteGuess={whiteGuess}
+                blackGuess={blackGuess}
+                whiteStats={reveal.white_stats}
+                blackStats={reveal.black_stats}
+                onNext={handleNextRound}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

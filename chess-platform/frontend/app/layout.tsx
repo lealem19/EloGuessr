@@ -25,6 +25,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <svg className="absolute w-0 h-0">
+          <filter id="grain">
+            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves={2} />
+          </filter>
+        </svg>
         <NavBar />
         {children}
       </body>

@@ -81,3 +81,4 @@ class GuessOut(BaseModel):
     score: int
     white_stats: PlayerStats
     black_stats: PlayerStats
+    percentile: Optional[int] = None  # None until enough guesses exist to be meaningful

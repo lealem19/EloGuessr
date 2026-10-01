@@ -17,14 +17,13 @@ export function NavBar() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-10 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur">
+    <header className="border-b border-zinc-200 dark:border-zinc-800">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="text-xl leading-none">♟️</span>
-          <span>EloGuessr</span>
+        <Link href="/" className="font-normal tracking-tight">
+          EloGuessr
         </Link>
 
-        <nav className="flex gap-1 bg-zinc-100 dark:bg-zinc-900 rounded-full p-1">
+        <nav className="flex gap-6 text-sm">
           {TABS.map((tab) => {
             const active = isActive(pathname, tab.href);
             return (
@@ -32,10 +31,10 @@ export function NavBar() {
                 key={tab.href}
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                className={`pb-0.5 border-b transition-colors ${
                   active
-                    ? "bg-white dark:bg-zinc-700 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                    ? "border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-zinc-100"
+                    : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
                 }`}
               >
                 {tab.label}

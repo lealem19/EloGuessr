@@ -14,6 +14,7 @@ from ..stats import compute_stats
 router = APIRouter()
 
 MIN_PLIES = 20
+MIN_SAMPLE_FOR_PERCENTILE = 5
 
 
 def _eligible_game_ids(db: Session, exclude: set[int] = frozenset()) -> list[int]:
@@ -101,6 +102,18 @@ def submit_guess(payload: schemas.GuessIn, db: Session = Depends(get_db)):
     )
     db.commit()
 
+    # Percentile vs every guess ever made (not just on this game -- most
+    # games won't have enough guesses on their own for this to mean
+    # anything). Guarded by a minimum sample so round 1 ever doesn't show a
+    # meaningless "better than 100%".
+    total = db.query(func.count(EloGuess.id)).scalar()
+    percentile = None
+    if total >= MIN_SAMPLE_FOR_PERCENTILE:
+        at_or_below = (
+            db.query(func.count(EloGuess.id)).filter(EloGuess.score <= score).scalar()
+        )
+        percentile = round(100 * at_or_below / total)
+
     return schemas.GuessOut(
         white_actual=game.white_elo,
         black_actual=game.black_elo,
@@ -109,4 +122,5 @@ def submit_guess(payload: schemas.GuessIn, db: Session = Depends(get_db)):
         score=score,
         white_stats=white_stats,
         black_stats=black_stats,
+        percentile=percentile,
     )

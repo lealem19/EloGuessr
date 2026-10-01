@@ -78,7 +78,7 @@ export default function GamePage() {
   }));
 
   return (
-    <div className="flex flex-1 flex-col items-center bg-zinc-50 dark:bg-black px-4 py-8">
+    <div className="flex flex-1 flex-col items-center px-4 py-8">
       <div className="w-full max-w-5xl">
         <h1 className="text-2xl font-semibold mb-1">
           {game.white}
@@ -120,25 +120,25 @@ export default function GamePage() {
                 onClick={() => setPly(0)}
                 className="px-3 py-1 rounded border border-zinc-300 dark:border-zinc-700 text-sm"
               >
-                ⏮ Start
+                Start
               </button>
               <button
                 onClick={() => setPly((p) => Math.max(0, p - 1))}
                 className="px-3 py-1 rounded border border-zinc-300 dark:border-zinc-700 text-sm"
               >
-                ← Prev
+                Prev
               </button>
               <button
                 onClick={() => setPly((p) => Math.min(game.moves.length, p + 1))}
                 className="px-3 py-1 rounded border border-zinc-300 dark:border-zinc-700 text-sm"
               >
-                Next →
+                Next
               </button>
               <button
                 onClick={() => setPly(game.moves.length)}
                 className="px-3 py-1 rounded border border-zinc-300 dark:border-zinc-700 text-sm"
               >
-                End ⏭
+                End
               </button>
             </div>
 

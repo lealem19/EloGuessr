@@ -7,6 +7,8 @@ import { Chessboard } from "react-chessboard";
 import { getDailyGuessGame, submitGuess, GuessDailyOut } from "@/lib/api";
 import { MoveControls } from "@/components/MoveControls";
 import { EloSlider } from "@/components/EloSlider";
+import { ScoreReveal } from "@/components/ScoreReveal";
+import { getVerdict } from "@/lib/verdict";
 
 const DEFAULT_GUESS = 1200;
 const STORAGE_PREFIX = "eloguessr-daily-";
@@ -17,6 +19,7 @@ type SavedResult = {
   whiteActual: number;
   blackActual: number;
   score: number;
+  percentile: number | null;
 };
 
 function fensForSans(sans: string[]): string[] {
@@ -102,6 +105,7 @@ export default function DailyPage() {
         whiteActual: r.white_actual,
         blackActual: r.black_actual,
         score: r.score,
+        percentile: r.percentile,
       };
       saveResult(round.date, saved);
       setResult(saved);
@@ -115,7 +119,8 @@ export default function DailyPage() {
 
   function handleCopy() {
     if (!round || !result) return;
-    const text = `EloGuessr Daily · ${round.date}\nScore: ${result.score} / 1000`;
+    const verdict = getVerdict(result.score);
+    const text = `EloGuessr Daily · ${round.date}\n${verdict.label} — ${result.score} / 1000`;
     navigator.clipboard?.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -123,102 +128,95 @@ export default function DailyPage() {
   }
 
   if (phase === "loading" && !round) {
-    return <div className="p-8 text-zinc-500">Loading today&apos;s game…</div>;
+    return <div className="flex-1 flex items-center justify-center text-zinc-500">Loading today&apos;s game…</div>;
   }
   if (error && !round) {
-    return <div className="p-8 text-red-600">{error}</div>;
+    return <div className="flex-1 flex items-center justify-center text-red-600">{error}</div>;
   }
   if (!round) return null;
 
   const currentFen = fens[Math.min(ply, fens.length - 1)];
 
   return (
-    <div className="flex flex-1 flex-col items-center bg-zinc-50 dark:bg-black px-4 py-8">
-      <div className="w-full max-w-2xl">
-        <h1 className="text-2xl font-semibold mb-1">Daily Guess the Elo</h1>
-        <p className="text-zinc-500 mb-6">
-          One game, one guess, resets every day at midnight UTC.{" "}
-          <span className="font-mono text-xs">{round.date}</span>
-        </p>
+    <div className="flex-1 flex items-center justify-center px-4 py-6 overflow-hidden">
+      <div className="w-full max-w-4xl">
+        <div className="flex items-baseline justify-between mb-4">
+          <h1 className="text-lg font-normal">Daily</h1>
+          <span className="text-xs font-mono text-zinc-400">{round.date}</span>
+        </div>
 
-        <div className="flex flex-col items-center">
-          <div className="w-full max-w-[420px]">
+        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-8 items-start">
+          <div>
             <Chessboard
               options={{ id: "daily-board", position: currentFen, allowDragging: false }}
             />
+            <MoveControls
+              ply={ply}
+              maxPly={fens.length - 1}
+              onChange={setPly}
+              active={phase === "playing"}
+            />
+            <p className="text-zinc-400 text-xs mt-2">
+              Ply {ply} / {fens.length - 1} · Result: {round.result ?? "?"}
+            </p>
           </div>
 
-          <MoveControls
-            ply={ply}
-            maxPly={fens.length - 1}
-            onChange={setPly}
-            active={phase === "playing"}
-          />
-
-          <p className="text-zinc-400 text-sm mt-2">
-            Ply {ply} / {fens.length - 1} · Result: {round.result ?? "?"}
-          </p>
-        </div>
-
-        {phase === "playing" && (
-          <div className="mt-8 flex flex-col gap-6">
-            <EloSlider label="White's Elo" value={whiteGuess} onChange={setWhiteGuess} />
-            <EloSlider label="Black's Elo" value={blackGuess} onChange={setBlackGuess} />
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="self-center rounded-full bg-foreground text-background px-6 py-2.5 font-medium disabled:opacity-50"
-            >
-              {submitting ? "Scoring…" : "Submit guess"}
-            </button>
-          </div>
-        )}
-
-        {phase === "revealed" && result && (
-          <>
-            <div className="mt-8 flex flex-col gap-6">
-              <EloSlider
-                label="White's Elo"
-                value={result.whiteGuess}
-                onChange={() => {}}
-                disabled
-                revealedActual={result.whiteActual}
-              />
-              <EloSlider
-                label="Black's Elo"
-                value={result.blackGuess}
-                onChange={() => {}}
-                disabled
-                revealedActual={result.blackActual}
-              />
-            </div>
-
-            <div className="mt-8 w-full bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6 text-center">
-              <p className="text-zinc-500 mb-1">Today&apos;s score</p>
-              <div className="text-4xl font-bold tabular-nums mb-4">
-                {result.score} <span className="text-base font-normal text-zinc-500">/ 1000</span>
-              </div>
-              <p className="text-zinc-500 text-sm mb-6">
-                Come back tomorrow for a new game — or keep playing right now.
-              </p>
-              <div className="flex gap-3 justify-center flex-wrap">
+          <div>
+            {phase === "playing" && (
+              <div className="flex flex-col gap-5">
+                <EloSlider label="White's Elo" value={whiteGuess} onChange={setWhiteGuess} />
+                <EloSlider label="Black's Elo" value={blackGuess} onChange={setBlackGuess} />
+                {error && <p className="text-red-600 text-sm">{error}</p>}
                 <button
-                  onClick={handleCopy}
-                  className="rounded-full border border-zinc-300 dark:border-zinc-700 px-5 py-2 font-medium text-sm"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="border border-zinc-900 dark:border-zinc-100 px-6 py-2.5 disabled:opacity-50"
                 >
-                  {copied ? "Copied!" : "Copy result"}
+                  {submitting ? "Scoring…" : "Submit guess"}
                 </button>
-                <Link
-                  href="/match"
-                  className="rounded-full bg-foreground text-background px-5 py-2 font-medium text-sm"
-                >
-                  Play a 5-round match →
-                </Link>
               </div>
-            </div>
-          </>
-        )}
+            )}
+
+            {phase === "revealed" && result && (
+              <div className="flex flex-col gap-5">
+                <ScoreReveal score={result.score} percentile={result.percentile} />
+
+                <div className="flex flex-col gap-4">
+                  <EloSlider
+                    label="White's Elo"
+                    value={result.whiteGuess}
+                    onChange={() => {}}
+                    disabled
+                    revealedActual={result.whiteActual}
+                  />
+                  <EloSlider
+                    label="Black's Elo"
+                    value={result.blackGuess}
+                    onChange={() => {}}
+                    disabled
+                    revealedActual={result.blackActual}
+                  />
+                </div>
+
+                <div className="flex gap-3 flex-wrap items-center">
+                  <button
+                    onClick={handleCopy}
+                    className="border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm"
+                  >
+                    {copied ? "Copied" : "Copy result"}
+                  </button>
+                  <Link
+                    href="/match"
+                    className="border border-zinc-900 dark:border-zinc-100 px-4 py-2 text-sm"
+                  >
+                    Play a 5-round match →
+                  </Link>
+                </div>
+                <p className="text-zinc-400 text-xs">Come back tomorrow for a new game.</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

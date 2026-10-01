@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const SPEED_MS = { "0.5x": 1600, "1x": 800, "2x": 400 } as const;
+const SPEED_MS = { "0.5x": 1600, "1x": 800, "2x": 400, "3x": 267, "4x": 200 } as const;
 type Speed = keyof typeof SPEED_MS;
 
 export function MoveControls({
@@ -44,45 +44,56 @@ export function MoveControls({
     onChange(Math.min(maxPly, Math.max(0, target)));
   }
 
+  function handlePlayPause() {
+    if (isPlaying) {
+      setIsPlaying(false);
+      return;
+    }
+    // At the end already -- restart from the beginning instead of a no-op.
+    if (ply >= maxPly) {
+      onChange(0);
+    }
+    setIsPlaying(true);
+  }
+
   return (
-    <div className="flex items-center gap-2 mt-3 flex-wrap justify-center">
+    <div className="flex items-center gap-2 mt-3 flex-wrap justify-center text-sm">
       <button
         onClick={() => jump(0)}
-        className="px-3 py-1 rounded border border-zinc-300 dark:border-zinc-700 text-sm"
+        className="px-3 py-1 border border-zinc-300 dark:border-zinc-700"
       >
-        ⏮ Start
+        Start
       </button>
       <button
         onClick={() => jump(ply - 1)}
-        className="px-3 py-1 rounded border border-zinc-300 dark:border-zinc-700 text-sm"
+        className="px-3 py-1 border border-zinc-300 dark:border-zinc-700"
       >
-        ← Prev
+        Prev
       </button>
       <button
-        onClick={() => setIsPlaying((p) => !p)}
+        onClick={handlePlayPause}
         disabled={!active}
-        aria-label={playingNow ? "Pause" : "Play"}
-        className="w-9 px-3 py-1 rounded border border-zinc-300 dark:border-zinc-700 text-sm text-center disabled:opacity-40"
+        className="w-16 px-3 py-1 border border-zinc-300 dark:border-zinc-700 text-center disabled:opacity-40"
       >
-        {playingNow ? "⏸" : "▶"}
+        {playingNow ? "Pause" : ply >= maxPly ? "Replay" : "Play"}
       </button>
       <button
         onClick={() => jump(ply + 1)}
-        className="px-3 py-1 rounded border border-zinc-300 dark:border-zinc-700 text-sm"
+        className="px-3 py-1 border border-zinc-300 dark:border-zinc-700"
       >
-        Next →
+        Next
       </button>
       <button
         onClick={() => jump(maxPly)}
-        className="px-3 py-1 rounded border border-zinc-300 dark:border-zinc-700 text-sm"
+        className="px-3 py-1 border border-zinc-300 dark:border-zinc-700"
       >
-        End ⏭
+        End
       </button>
       <select
         value={speed}
         onChange={(e) => setSpeed(e.target.value as Speed)}
         aria-label="Playback speed"
-        className="px-2 py-1 rounded border border-zinc-300 dark:border-zinc-700 text-sm bg-white dark:bg-zinc-900"
+        className="px-2 py-1 border border-zinc-300 dark:border-zinc-700 bg-transparent"
       >
         {(Object.keys(SPEED_MS) as Speed[]).map((s) => (
           <option key={s} value={s}>

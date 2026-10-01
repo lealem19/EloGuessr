@@ -64,6 +64,7 @@ export type GuessOut = {
   score: number;
   white_stats: PlayerStats;
   black_stats: PlayerStats;
+  percentile: number | null;
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

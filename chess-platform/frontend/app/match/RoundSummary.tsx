@@ -1,28 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import type { PlayerStats } from "@/lib/api";
-
-function useCountUp(target: number, durationMs = 800) {
-  const [value, setValue] = useState(0);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- animation driver, resets per target change
-    setValue(0);
-    const start = performance.now();
-    let raf: number;
-    function tick(now: number) {
-      const t = Math.min(1, (now - start) / durationMs);
-      setValue(Math.round(target * (1 - Math.pow(1 - t, 3))));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    }
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, durationMs]);
-  return value;
-}
+import { ScoreReveal } from "@/components/ScoreReveal";
 
 export function RoundSummary({
   roundScore,
+  percentile,
   roundIndex,
   totalRounds,
   runningTotal,
@@ -35,6 +18,7 @@ export function RoundSummary({
   onNext,
 }: {
   roundScore: number;
+  percentile: number | null;
   roundIndex: number;
   totalRounds: number;
   runningTotal: number;
@@ -46,22 +30,12 @@ export function RoundSummary({
   blackStats: PlayerStats;
   onNext: () => void;
 }) {
-  const shownScore = useCountUp(roundScore);
   const isLast = roundIndex === totalRounds - 1;
 
   return (
-    <div className="mt-8 w-full bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-      <div className="flex items-baseline justify-between mb-4">
-        <h2 className="text-xl font-semibold">
-          Round {roundIndex + 1} of {totalRounds}
-        </h2>
-        <span className="text-sm text-zinc-500">
-          Total: {runningTotal + shownScore} / {totalRounds * 1000}
-        </span>
-      </div>
-      <div className="text-3xl font-bold tabular-nums mb-4">
-        {shownScore} <span className="text-base font-normal text-zinc-500">/ 1000</span>
-      </div>
+    <div className="flex flex-col gap-5">
+      <ScoreReveal score={roundScore} percentile={percentile} />
+
       <div className="grid grid-cols-2 gap-6 text-sm">
         {(
           [
@@ -84,12 +58,18 @@ export function RoundSummary({
           </div>
         ))}
       </div>
-      <button
-        onClick={onNext}
-        className="mt-6 rounded-full bg-foreground text-background px-6 py-2.5 font-medium"
-      >
-        {isLast ? "See final results →" : "Next round →"}
-      </button>
+
+      <div className="flex items-baseline justify-between">
+        <span className="text-xs text-zinc-400">
+          Match total: {runningTotal + roundScore} / {totalRounds * 1000}
+        </span>
+        <button
+          onClick={onNext}
+          className="border border-zinc-900 dark:border-zinc-100 px-5 py-2 text-sm"
+        >
+          {isLast ? "See final results →" : "Next round →"}
+        </button>
+      </div>
     </div>
   );
 }
